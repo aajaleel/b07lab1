@@ -88,7 +88,6 @@ class Polynomial {
 	    }
 	   
 	    return added;
-	   
 	  }
 	  
 	  //method to multiply two polynomials
@@ -107,59 +106,54 @@ class Polynomial {
 		  for (int i = 0; i<this.expo.length; i++) {
 			 for (int j = 0; j<p.expo.length; j++) {
 				co_arr[c] = this.coeff[i]*p.coeff[j];
+				//System.out.println(co_arr[c]);
 				ex_arr[c] = this.expo[i]+p.expo[j];
+				//System.out.println(ex_arr[c]);
 				c++;
 			 }
 		  }
 		  
 		  //calculating the number of distinct exponents after multiplying
 		  
-		  
-		  int copy[] = new int[this.expo.length*p.expo.length];
+		  int existing_exponents[] = new int[this.expo.length*p.expo.length];
 		  int in_it = 0;		  
 		  
-		  for (int i = 0; i<ex_arr.length; i++) {
-			  if (index(ex_arr[i], copy)==-1) {
-				  copy[in_it] = ex_arr[i];
+		  for (int i = 0; i<existing_exponents.length; i++) {
+			  if (index(ex_arr[i], existing_exponents)==-1) {
+				  existing_exponents[i] = ex_arr[i];
 				  in_it++;
 			  }
 		  }
-		  
 		  
 		  //initializing polynomial
 		  
 		  int[] end_exp = new int[in_it];
 		  double[] end_coeff = new double[in_it];
-
-		  int done = 0;
-		  int used[] = new int[ex_arr.length];
+		  int used_index = 0;
 		  
 		  for (int i = 0; i<ex_arr.length; i++) {
-			  used[i] = ex_arr[i];
-			  for (int j = i+1; j<ex_arr.length; j++) {
-				  if (index(ex_arr[i], used)==-1) {
-					  if (ex_arr[i] == ex_arr[j]) {
-						  end_exp[done] = ex_arr[i];
-						  end_coeff[done] = co_arr[i] + co_arr[j];
-						  done++;
-					  }
-				  }
+			  // look to see if this index has already been put into final exponent array
+			  int x = index(ex_arr[i], end_exp);
+			  //if it hasn't, add to final exponent array and add corresponding coefficient
+			  if (x==-1) {  
+				  end_exp[used_index] = ex_arr[i];
+				  end_coeff[used_index] = co_arr[i];
+				  used_index++;
+			  //if it has, we only need to modify the coeff value at the existing index of exponent
+			  }else {
+				  end_coeff[x] = end_coeff[x] + co_arr[i];
 			  }
 		  }
-		  
 		  Polynomial mx = new Polynomial(end_coeff, end_exp);
 		  return mx;
-
 	  } 
 	  
-	  // is using this. okay here?
 
 	  public double evaluate(double x) {
 
 	    double total = 0;
-
-	    for (int i = 0; i < this.coeff.length; i++)
-	      total = total + this.coeff[i] * Math.pow(x, this.expo[i]);
+	    for (int i = 0; i < this.coeff.length; i++) 
+	    	total = total + this.coeff[i] * Math.pow(x, this.expo[i]);
 
 	    return total;
 	  }
@@ -175,80 +169,98 @@ class Polynomial {
 	  public Polynomial(File file) throws FileNotFoundException {
 		  
 		  //scan the one-line file
-		  
+
 		  Scanner input = new Scanner(file);
 		  String line = input.nextLine();
+		  String [] polys = line.split("((?=\\-)|(\\+))");
 		  
 		  //count number of terms in polynomial
-		  int num = 1;
-		  
-		  for (int i = 0; i<line.length(); i++) {
-			  if (line.charAt(i) == '+' || line.charAt(i) == '-') {
-				  num++;
-			  }
-		  }
-		  
-		  //
-		  
-	      coeff = new double[num];
-	      expo = new int[num];
-	      //String s = "";
-	      
-	      
-	     int index = 0;
-	     
-	     for (int i = 0; i<num; i++) {
-	    	 
-	    	 //add coefficient value to array
+	
+	      coeff = new double[polys.length];
+	      expo = new int[polys.length];
+	     for (int i = 0; i<polys.length; i++) {
 
 		     String co_str = "";
-
-	    	 while(line.charAt(index) != 'x') {
-	    		 co_str = co_str + line.charAt(index);
-	    		 index++;
+		     int index = 0;
+		     int counterr = 0;
+		     for (int x = 0; x<polys[i].length(); x++) {
+		    	 if (polys[i].charAt(x) == 'x') {
+		    		 counterr++;		    	 }
+		     }
+		     
+		     if (counterr==0) {
+		    	 double p = Double.parseDouble(polys[i]);
+	    		 coeff[i] = p;
+	    		 expo[i] = 0;
+		     }
+		     
+		     else {
+		     
+		    	 while(polys[i].charAt(index) != 'x') {
+		    		 co_str = co_str + polys[i].charAt(index);
+		    		 index++;
+		    		 if (index == polys[i].length()){
+		    			 break;
+		    		 }
+		    	 }
+		    	 
+		    	 
+		    	 if (co_str == "" ) {
+			    	 coeff[i] = 1;
+		    	 
+		    	 }else if (co_str == "-") {
+			    	 coeff[i] = -1;
+			    	 
+		    	 }else {
+		    		 double j = Double.parseDouble(co_str);
+		    		 coeff[i] = j;
+		    	 }
+		    	 
+		     if (index == polys[i].length()-1) {
+	    		 expo[i] = 1;
 	    	 }
-	    	 double j = Double.parseDouble(co_str);
-	    	 coeff[i] = j;
 	    	 
-	    	 //add exponent value to array
-	    	 
-	    	 index++; //skip over the 'x'
-	    	 
-		     String exp_str = "";
-
-	    	 while(line.charAt(index) != '+' && line.charAt(index) != '-') {
-	    		 exp_str = exp_str + line.charAt(index);
+	    	 else {
 	    		 index++;
+			     String exp_str = "";
+	    		 
+	    		 while (index<polys[i].length()) {
+	    			 exp_str = exp_str + polys[i].charAt(index);
+		    		 index++;
+	    		 }
+	    		 
+	    		 int k = Integer.parseInt(exp_str);
+	    		 expo[i] = k; 
 	    	 }
-	    	 int k = Integer.parseInt(exp_str);
-	    	 expo[i] = k; 
-	    	 index++;
-	     }
-	     
-	     input.close();
+		     }
+	    	 
+	     } input.close();
 	  }
-	  
-	  
+	    		  
 	  void saveToFile(String name) throws Exception{
-		  
-		  if (this.coeff.length == 0) {
-			  return;
-		  }
-		  
-		  String result = ""; 
-		  
-		  for (int i = 0; i < this.coeff.length; i++) {
-			  result += String.valueOf(this.coeff[i]);
-			  result += 'x';
-			  result += String.valueOf(this.expo[i]);
+		 
+		  String result = "";
+		  for (int i = 0; i < coeff.length; i++) {
+			  String co = String.valueOf(coeff[i]);
+			  if (co.charAt(0)!= '-' && i!=0) {
+				  result+='+';
+			  }
+			  
+			  if (expo[i]==0) {
+				  result+=co;	  
+				  
+			  }else {
+				  result += co;
+				  result += 'x';
+				  result += String.valueOf(expo[i]);
+			  }  
 		  }
 		  
 		  PrintStream out = new PrintStream(name);
 		  out.println(result);
-		  out.close();
-		  		  
+		  out.close(); 		  
 	  }
-	  
-	  
 }
+
+
 
